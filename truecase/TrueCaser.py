@@ -1,10 +1,17 @@
 import pickle
 import os
 import math
-import nltk
 import string
+import spacy
 
 
+class text_token(object):
+    def __init__(self, token_text, type):
+        self.text = token_text
+        self.type = type
+
+    def __str__(self):
+        return ("{} : {}".format(self.text, self.type))
 
 class TrueCaser(object):
     def __init__(self, dist_file_path=None):
@@ -77,21 +84,40 @@ class TrueCaser(object):
             lower: Returns OOV tokens in lower case
             as-is: Returns OOV tokens as is
         """
-        tokens = nltk.word_tokenize(sentence)
+        nlp = spacy.load('en_core_web_sm')
+        
+        doc = nlp(sentence)
+
+        token_text = []
+        for t in doc: 
+            cat = ''
+            if t.is_space:
+                cat = 'space'
+            elif t.is_digit:
+                cat = 'digit'
+            elif t.is_punct:
+                cat = 'punctuation'
+            else:
+                cat = 'word'
+            token_text.append(text_token(t.text, cat))
+            if t.whitespace_:
+                cat = 'whitespace'
+                token_text.append(text_token(t.whitespace_, cat))
+
 
         tokens_true_case = []
-        for token_idx, token in enumerate(tokens):
 
-            if token in string.punctuation or token.isdigit():
-                tokens_true_case.append(token)
+        for token_idx, tt in enumerate(token_text):
+            if tt.type in ['space', 'digit', 'punctuation', 'whitespace']:
+                tokens_true_case.append(tt.text)
             else:
-                token = token.lower()
+                token = tt.text.lower()
                 if token in self.word_casing_lookup:
                     if len(self.word_casing_lookup[token]) == 1:
                         tokens_true_case.append(list(self.word_casing_lookup[token])[0])
                     else:
-                        prev_token = tokens_true_case[token_idx - 1] if token_idx > 0 else None
-                        next_token = tokens[token_idx + 1] if token_idx < len(tokens) - 1 else None
+                        prev_token = tokens_true_case[token_idx - 2] if token_idx > 1 else None
+                        next_token = token_text[token_idx + 2].text if token_idx < len(token_text) - 2 else None
 
                         best_token = None
                         highest_score = float("-inf")
@@ -116,16 +142,11 @@ class TrueCaser(object):
                     else:
                         tokens_true_case.append(token)
 
-        return "".join(
-            [" "+i if not i.startswith("'") and i not in string.punctuation else i for i in tokens_true_case]
-        ).strip()
+        return ''.join(tokens_true_case)
 
 
-if __name__ == '__main__':
-    dist_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/english.dist')
 
-    caser = TrueCaser(dist_file_path)
+caser = TrueCaser(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/english.dist'))
 
-    while True:
-        ip = input('Enter a sentence: ')
-        print(caser.get_true_case(ip, 'title'))
+text = "\r\n  patient name: Jeremy Vogle"
+print(caser.get_true_case(text, 'title'))
