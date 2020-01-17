@@ -148,5 +148,5 @@ class TrueCaser(object):
 
 caser = TrueCaser(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data/english.dist'))
 
-text = "\r\n  patient name: Jeremy Vogle"
+text = "oddly cased text \r\n  here."
 print(caser.get_true_case(text, 'title'))
