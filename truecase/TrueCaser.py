@@ -135,11 +135,6 @@ class TrueCaser(object):
                         tokens_true_case[0] = tokens_true_case[0].title();
 
                 else:  # Token out of vocabulary
-                    if out_of_vocabulary_token_option == 'title':
-                        tokens_true_case.append(token.title())
-                    elif out_of_vocabulary_token_option == 'lower':
-                        tokens_true_case.append(token.lower())
-                    else:
                         tokens_true_case.append(token)
 
         return ''.join(tokens_true_case)
